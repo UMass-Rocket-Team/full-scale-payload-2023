@@ -33,6 +33,8 @@ if camera.isOpened():
 else:
     print("No camera available.")
 
+grayscale = False
+
 text = input("Enter codes: ")
 codes = text.split()
 
@@ -40,16 +42,25 @@ for code in codes:
     if code in code_to_command:
         command = code_to_command[code]
         print(f"Command given: {command}")
+        time.sleep(10)
+        # Take Image
         if code == "C3":
             ret, frame = camera.read()
-            time.sleep(5)
             if ret:
+                if grayscale:
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 image_path = os.path.join(image_folder, f"image_{timestamp}.jpg")
                 cv2.imwrite(image_path, frame)
                 print(f"Image taken and stored as {image_path}")
             else:
                 print("Failed to take image.")
+        # Grayscale
+        if code == "D4":
+            grayscale = True
+        # Color
+        if code == "E5":
+            grayscale = False
     else:
         print("Invalid code.")
 
