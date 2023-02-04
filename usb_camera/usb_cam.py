@@ -3,6 +3,8 @@ import os
 import datetime
 import time
 
+call_sign = "XX4XXX"
+
 code_to_command = {
     "A1": "Turn camera 60 deg to the right",
     "B2": "Turn camera 60 deg to the left",
@@ -38,19 +40,26 @@ grayscale = False
 text = input("Enter codes: ")
 codes = text.split()
 
+if codes[0] != call_sign:
+    print("Invalid call sign.")
+    exit()
+
+codes = codes[1:]  # remove the call sign
+
 for code in codes:
     if code in code_to_command:
         command = code_to_command[code]
         print(f"Command given: {command}")
-        time.sleep(10)
         # Take Image
         if code == "C3":
+            time.sleep(5)
             ret, frame = camera.read()
             if ret:
                 if grayscale:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 image_path = os.path.join(image_folder, f"image_{timestamp}.jpg")
+                cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
                 cv2.imwrite(image_path, frame)
                 print(f"Image taken and stored as {image_path}")
             else:
