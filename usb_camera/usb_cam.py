@@ -3,8 +3,11 @@ import os
 import datetime
 import time
 
+# XX4XXX C3 A1 D4 C3 F6 C3 F6 B2 B2 C3
+
 call_sign = "XX4XXX"
 
+# Dictionary to map codes to their corresponding command
 code_to_command = {
     "A1": "Turn camera 60 deg to the right",
     "B2": "Turn camera 60 deg to the left",
@@ -16,10 +19,14 @@ code_to_command = {
     "H8": "Remove all filters"
 }
 
+# Folder to store the images
 image_folder = "images"
+
+# Create the folder if it does not exist
 if not os.path.exists(image_folder):
     os.makedirs(image_folder)
 
+# Find the index of the available camera
 camera_index = 0
 for i in range(10):
     cap = cv2.VideoCapture(i)
@@ -29,41 +36,49 @@ for i in range(10):
         camera_index = i
         break
 
-camera = cv2.VideoCapture(camera_index)
-if camera.isOpened():
-    print(f"Using camera with index {camera_index}.")
-else:
-    print("No camera available.")
-
+# Flag to track if grayscale mode is on or off
 grayscale = False
 
+# Read the input codes
 text = input("Enter codes: ")
 codes = text.split()
 
+# Check if the call sign is correct
 if codes[0] != call_sign:
     print("Invalid call sign.")
     exit()
 
-codes = codes[1:]  # remove the call sign
+# Remove the call sign from the codes
+codes = codes[1:]
 
+# Iterate over the codes
 for code in codes:
+    # Check if code is in the dictionary
     if code in code_to_command:
         command = code_to_command[code]
         print(f"Command given: {command}")
         # Take Image
         if code == "C3":
+            camera = cv2.VideoCapture(camera_index)
+            # Wait for 5 seconds before taking image
             time.sleep(5)
+            # Read the image from the camera
             ret, frame = camera.read()
+            # If image is successfully read
             if ret:
+                # Convert to grayscale if grayscale mode is on
                 if grayscale:
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                # Get the current timestamp
                 timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                # Construct the image path, timestamp, and save image
                 image_path = os.path.join(image_folder, f"image_{timestamp}.jpg")
                 cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
                 cv2.imwrite(image_path, frame)
                 print(f"Image taken and stored as {image_path}")
             else:
                 print("Failed to take image.")
+            camera.release()
         # Grayscale
         if code == "D4":
             grayscale = True
