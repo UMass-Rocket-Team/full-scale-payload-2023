@@ -15,8 +15,6 @@ ser = serial.Serial(
     timeout = 1
 )
 
-counter = 0
-
 while 1:
     x = ser.readline().strip()
     print(x)

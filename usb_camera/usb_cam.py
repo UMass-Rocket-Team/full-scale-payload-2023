@@ -3,6 +3,31 @@ import os
 import datetime
 import time
 
+import serial
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setwarnings(False)
+GPIO.setup(23, GPIO.OUT)
+
+ser = serial.Serial(
+    port = '/dev/ttyS0',
+    baudrate = 9600,
+    parity = serial.PARITY_NONE,
+    stopbits = serial.STOPBITS_ONE,
+    bytesize = serial.EIGHTBITS,
+    timeout = 1
+)
+
+# Wait for RAFCO transmission
+no_command = True
+
+while no_command:
+    msg = ser.readline().strip().decode()
+    if len(msg) == 36:
+        no_command = False
+
+    
 # XX4XXX C3 A1 D4 C3 F6 C3 F6 B2 B2 C3
 
 call_sign = "XX4XXX"
@@ -40,8 +65,8 @@ for i in range(10):
 grayscale = False
 
 # Read the input codes
-text = input("Enter codes: ")
-codes = text.split()
+# text = input("Enter codes: ")
+codes = msg.split()
 
 # Check if the call sign is correct
 if codes[0] != call_sign:
