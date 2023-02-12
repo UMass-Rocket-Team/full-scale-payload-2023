@@ -1,18 +1,6 @@
 import machine
+import sdcard
 import uos
-import time
-
-# setup uart object (uart0 maps to pin 1 on the pico)
-uart = machine.UART(0, 9600)
-# initialize the serial connection with given parameters
-uart.init(9600, parity=None, stop=1)
-time.sleep(0.5)
-print("code has been run.")
-uart.write("Initial Transmission\n\n")
-uart.write("\nRocket was connected to power\n")
-uart.write("\nWaiting 3 seconds\n")
-time.sleep(3)
-
 
 # Assign chip select (CS) pin (and start it high)
 cs = machine.Pin(9, machine.Pin.OUT)
@@ -29,9 +17,7 @@ spi = machine.SPI(
     mosi=machine.Pin(11),
     miso=machine.Pin(8),
 )
-
 # Initialize SD card
-uart.write("\nIMU initialized. Initializing SD Card\n")
 sd = sdcard.SDCard(spi, cs)
 
 # Mount filesystem
@@ -39,8 +25,6 @@ vfs = uos.VfsFat(sd)
 uos.mount(vfs, "/sd")
 
 # Find a file name so nothing is overridden
-
-
 def get_valid_file_name(path, ext):
     try:
         # If uos.stat doesn't have error, then the file exists, use a different name
@@ -51,9 +35,9 @@ def get_valid_file_name(path, ext):
         # file does not exist, use this file name
         return path + "." + ext
 
-
-uart.write("\n SD Card initialized.\n")
-
-flight_log.write("\nIMU is calibrated")
-flight_log.write("\nTime (ms): " + str(time.ticks_ms()))
-uart.write("\n\nIMU is calibrated")
+# NOTE: Need to close this at the end of the program
+imu_data = open(get_valid_file_name("/sd/imu_data", "csv"), "w")
+imu_data.write(
+    "Time, Temperature, Mag X, Mag Y, Mag Z, Gyro X, Gyro Y, Gyro Z, Acc X, Acc Y, Acc Z, Lin Acc X, Lin Acc Y, Lin Acc Z, Gravity X, Gravity Y, Gravity Z, Euler X, Euler Y, Euler Z\n"
+)
+flight_log = open(get_valid_file_name("/sd/flight_log", "txt"), "w")

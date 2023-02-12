@@ -1,3 +1,5 @@
+from statistics import mean, variance
+
 class QueueOverflowException(Exception):
     pass
 class EmptyQueueException(Exception):
@@ -56,4 +58,7 @@ class Queue():
     def get_proportion_above_threshold(self):
         #catch div by 0
         return self.num_above_threshold/self.num_data_points
-
+    def get_mean(self):
+        return mean(self.array)
+    def get_variance(self):
+        return variance(self.array)
