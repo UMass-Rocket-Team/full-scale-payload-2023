@@ -2,6 +2,7 @@ import machine
 import time
 from imu_setup import imu
 from uart_setup import uart
+from controller import do_every
 
 # -----LANDED PHASE-----
 

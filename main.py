@@ -1,7 +1,8 @@
 import machine
 import uos
-from math import floor
 import time
+from controller import do_every, calculate_max_size, make_data_updater
+
 
 from uart_setup import uart
 
@@ -16,31 +17,9 @@ from rocket_queue import Queue
 
 
 
-class ForceLandingException(Exception):
-    pass
+
 
 init_time = time.ticks_ms()
-
-# calculate maximum size of queue needed by frequency (samples/s) * interval to keep track of (ms) / 1000 (ms/s) * 1.25 room for error
-def calculate_max_size(sample_frequency, queue_interval):
-    return floor(sample_frequency * queue_interval / 1000 * 1.25)
-
-
-# Inputs: Array of functions that should be run every x ms
-# 		Array of intervals of time between each run of its corresponding function
-# Outputs: None
-# Each function in func_arr should raise an exception if the loop should stop being run
-def do_every(func_arr, interval_arr):
-    prevTimes = [-999999] * len(func_arr)
-    while True:
-        for i, func in enumerate(func_arr):
-            if time.ticks_diff(time.ticks_ms(), prevTimes[i]) > interval_arr[i]:
-                try:
-                    func()
-                    prevTimes[i] = time.ticks_ms()
-                except StopIteration:  # Leave the while loop
-                    return
-
 
 def write_to_imu_data():
     format_str = "{:5.3f},{:5.3f},{:5.3f},"
@@ -58,7 +37,6 @@ def write_to_imu_data():
         + "\n"
     )
 
-
 imu_data_frequency = 100  # Hz
 imu_data_interval = 1 / imu_data_frequency * 1000  # ms
 
@@ -68,21 +46,7 @@ time_queue = None
 accel_queue = None
 altitude_queue = None
 
-# Inputs: Interval: How much acceleration data should be kept track of (eg last 2000 ms, interval = 2000)
-# 						NOTE: This does not mean acceleration is updated every interval ms
-# Output: A function that can be passed into do_every to update the time and acceleration queues
-def make_data_updater(interval):
-    def updater():
-        cur_time = time.ticks_ms()
-        time_queue.enqueue(cur_time)
-        accel_data = imu.accel()
-        accel_queue.enqueue((accel_data[0] ** 2 + accel_data[1]** 2 + accel_data[2] ** 2) ** 0.5)
-        altitude_queue.enqueue(pressure_sensor.altitude())
-        while time.ticks_diff(cur_time, time_queue.peek()) > interval:
-            time_queue.dequeue()
-            accel_queue.dequeue()
-            altitude_queue.dequeue()
-    return updater
+
 
 
 # -----CALIBRATION PHASE-----
@@ -116,15 +80,8 @@ queue_frequency = 5  # Hz
 check_interval = 5000  # time between variance checks
 
 # calculate time between samples in ms based on desired frequency
-accel_sample_interval = 1000 / queue_frequency
-max_size = calculate_max_size(queue_frequency, check_interval)
 
-# Queue(maximum length of queue, initial threshold)
-time_queue = Queue(max_size, None)
-accel_queue = Queue(max_size, GRAVITY)
-altitude_queue = Queue(max_size, ALTITUDE_THRESHOLD)
-data_updater = make_data_updater(check_interval)
-
+data_updater = make_data_updater(queue_frequency, check_interval, (GRAVITY, ALTITUDE_THRESHOLD))
 
 def find_reference_gravity():  # CHECK HERE FOR SOMEWHAT ARBITRARY VALUES
     global GRAVITY
