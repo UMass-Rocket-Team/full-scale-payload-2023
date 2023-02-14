@@ -1,6 +1,7 @@
 import machine
 import uos
 import time
+from initializations import init_time, accel_queue, time_queue, altitude_queue
 from controller import do_every, calculate_max_size, make_data_updater
 
 
@@ -15,14 +16,6 @@ uart.write("\n SD Card initialized.\n")
 from pressure_sensor_setup import pressure_sensor
 from rocket_queue import Queue
 
-
-
-
-
-init_time = time.ticks_ms()
-time_queue = None
-accel_queue = None
-altitude_queue = None
 
 def write_to_imu_data():
     format_str = "{:5.3f},{:5.3f},{:5.3f},"
