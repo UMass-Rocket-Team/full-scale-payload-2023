@@ -20,6 +20,9 @@ from rocket_queue import Queue
 
 
 init_time = time.ticks_ms()
+time_queue = None
+accel_queue = None
+altitude_queue = None
 
 def write_to_imu_data():
     format_str = "{:5.3f},{:5.3f},{:5.3f},"
@@ -71,7 +74,7 @@ queue_frequency = 5  # Hz
 accel_sample_interval = 1000 / queue_frequency
 check_interval = 5000  # time between variance checks
 
-data_updater = make_data_updater(queue_frequency, check_interval, (GRAVITY, ALTITUDE_THRESHOLD))
+data_updater = make_data_updater(queue_frequency, check_interval, (GRAVITY, ALTITUDE_THRESHOLD), (time_queue, accel_queue, altitude_queue)))
 
 def find_reference_gravity():  # CHECK HERE FOR SOMEWHAT ARBITRARY VALUES
     global GRAVITY
@@ -109,7 +112,7 @@ queue_frequency = 50  # Hz
 burn_time = 2970 * 0.85  # Multiply by .85 for some room for error
 accel_sample_interval = 1000 / queue_frequency
 
-data_updater = make_data_updater(queue_frequency, burn_time, (GRAVITY, ALTITUDE_THRESHOLD))
+data_updater = make_data_updater(queue_frequency, burn_time, (GRAVITY, ALTITUDE_THRESHOLD), (time_queue, accel_queue, altitude_queue))
 
 def check_launch():
     if time.ticks_diff(time.ticks_ms(), time_queue.peek()) < 0.5 * burn_time:
@@ -143,7 +146,7 @@ check_interval = 10000  # Want to keep track of last 10 seconds of acceleration 
 # calculate time between samples in ms based on desired frequency
 accel_sample_interval = 1000 / queue_frequency
 
-data_updater = make_data_updater(queue_frequency, check_interval, (GRAVITY, ALTITUDE_THRESHOLD))
+data_updater = make_data_updater(queue_frequency, check_interval, (GRAVITY, ALTITUDE_THRESHOLD), (time_queue, accel_queue, altitude_queue)
 
 def check_landing():
     if time.ticks_diff(time.ticks_ms(), time_queue.peek()) < 0.5 * check_interval:
@@ -163,4 +166,7 @@ flight_log.write("\nThe rocket has landed")
 flight_log.write("\nTime (ms): " + str(time_queue.peek()))
 uart.write("\n\nLanding Detected")
 uart.write("\nTime (ms): " + str(time_queue.peek()))
+
+# -----AFTER FLIGHT PHASE-----
+from post_landing import *
 
