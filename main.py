@@ -1,8 +1,7 @@
-import machine
-import uos
 import time
+import RPi.GPIO as GPIO
 from initializations import init_time, accel_queue, time_queue, altitude_queue
-from controller import do_every, calculate_max_size, make_data_updater
+from controller import do_every, make_data_updater
 
 
 from uart_setup import uart
@@ -12,9 +11,6 @@ from imu_setup import imu, write_to_imu_data, calibration_fn
 uart.write("\nIMU initialized. Initializing SD Card\n")
 from sd_setup import imu_data, flight_log, get_valid_file_name
 uart.write("\n SD Card initialized.\n")
-
-from pressure_sensor_setup import pressure_sensor
-from rocket_queue import Queue
 
 
 def write_to_imu_data():
