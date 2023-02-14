@@ -1,5 +1,4 @@
 import time
-import RPi.GPIO as GPIO
 from initializations import init_time, accel_queue, time_queue, altitude_queue
 from controller import do_every, make_data_updater
 
