@@ -1,6 +1,6 @@
 import machine
 import uos
-import time
+from rocketTime import time_diff, get_time
 from initializations import init_time, accel_queue, time_queue, altitude_queue
 from controller import do_every, calculate_max_size, make_data_updater
 
@@ -17,21 +17,7 @@ from pressure_sensor_setup import pressure_sensor
 from rocket_queue import Queue
 
 
-def write_to_imu_data():
-    format_str = "{:5.3f},{:5.3f},{:5.3f},"
-    imu_data.write(
-        str(time.ticks_diff(time.ticks_ms(), init_time) / 1000.0)
-        + ","
-        + str(imu.temperature())
-        + ","
-        + format_str.format(*imu.mag())
-        + format_str.format(*imu.gyro())
-        + format_str.format(*imu.accel())
-        + format_str.format(*imu.lin_acc())
-        + format_str.format(*imu.gravity())
-        + format_str.format(*imu.euler())
-        + "\n"
-    )
+
 
 imu_data_frequency = 100  # Hz
 imu_data_interval = 1 / imu_data_frequency * 1000  # ms
@@ -57,7 +43,7 @@ do_every([calibration_fn], [1000])
 #imu.set_offsets(offset_arr)
 
 flight_log.write("\nIMU is calibrated")
-flight_log.write("\nTime (ms): " + str(time.ticks_ms()))
+flight_log.write("\nTime (ms): " + str(get_time()))
 uart.write("\n\nIMU is calibrated")
 
 # -----SETUP PHASE-----
@@ -71,7 +57,7 @@ data_updater = make_data_updater(queue_frequency, check_interval, (GRAVITY, ALTI
 
 def find_reference_gravity():  # CHECK HERE FOR SOMEWHAT ARBITRARY VALUES
     global GRAVITY
-    if time.ticks_diff(time.ticks_ms(), time_queue.peek()) < check_interval * 0.5:
+    if time_diff(get_time(), time_queue.peek()) < check_interval * 0.5:
         return
     mean = accel_queue.getMean()
     
@@ -108,7 +94,7 @@ accel_sample_interval = 1000 / queue_frequency
 data_updater = make_data_updater(queue_frequency, burn_time, (GRAVITY, ALTITUDE_THRESHOLD), (time_queue, accel_queue, altitude_queue))
 
 def check_launch():
-    if time.ticks_diff(time.ticks_ms(), time_queue.peek()) < 0.5 * burn_time:
+    if time_diff(get_time(), time_queue.peek()) < 0.5 * burn_time:
         return  # Dont check for launch if there's not enough data in the queue yet
     uart.write("\n Launch Threshold Proportion: " + str(accel_queue.get_proportion_above_threshold()))
     if accel_queue.get_proportion_above_threshold() < 0.95:
@@ -142,7 +128,7 @@ accel_sample_interval = 1000 / queue_frequency
 data_updater = make_data_updater(queue_frequency, check_interval, (GRAVITY, ALTITUDE_THRESHOLD), (time_queue, accel_queue, altitude_queue))
 
 def check_landing():
-    if time.ticks_diff(time.ticks_ms(), time_queue.peek()) < 0.5 * check_interval:
+    if time_diff(get_time(), time_queue.peek()) < 0.5 * check_interval:
         return  # Dont check for landing if there's not enough data in the queue yet
     uart.write("\n Landing Threshold Proportion: " + str(accel_queue.get_proportion_above_threshold()))
     if accel_queue.get_proportion_above_threshold() > 0.05:

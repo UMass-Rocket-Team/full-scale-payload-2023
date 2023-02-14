@@ -1,6 +1,9 @@
 import machine
 import sdcard
 import uos
+from imu_setup import imu
+from initializations import init_time
+from rocketTime import time_diff, get_time
 
 # Assign chip select (CS) pin (and start it high)
 cs = machine.Pin(9, machine.Pin.OUT)
@@ -41,3 +44,26 @@ imu_data.write(
     "Time, Temperature, Mag X, Mag Y, Mag Z, Gyro X, Gyro Y, Gyro Z, Acc X, Acc Y, Acc Z, Lin Acc X, Lin Acc Y, Lin Acc Z, Gravity X, Gravity Y, Gravity Z, Euler X, Euler Y, Euler Z\n"
 )
 flight_log = open(get_valid_file_name("/sd/flight_log", "txt"), "w")
+
+
+def write_to_imu_data():
+    format_str = "{:5.3f},{:5.3f},{:5.3f},"
+    imu_data.write(
+        str(time_diff(get_time(), init_time) / 1000.0)
+        + ","
+        + str(imu.temperature())
+        + ","
+        + format_str.format(*imu.mag())
+        + format_str.format(*imu.gyro())
+        + format_str.format(*imu.accel())
+        + format_str.format(*imu.lin_acc())
+        + format_str.format(*imu.gravity())
+        + format_str.format(*imu.euler())
+        + "\n"
+    )
+
+def write_to_imu_data(): 
+    imu_tuple = (*imu.mag(), *imu.gyro(), *imu.accel(), *imu.lin_acc(), *imu.gravity(), *imu.euler)
+    imu_data.write(
+        
+    )
