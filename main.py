@@ -6,6 +6,10 @@ import time
 import serial
 import RPi.GPIO as GPIO
 
+'''
+STARTUP / INIT PHASE
+'''
+
 # Define XBee 
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
@@ -19,6 +23,30 @@ ser = serial.Serial(
     bytesize = serial.EIGHTBITS,
     timeout = 1
 )
+
+# Send startup confirmation to XBee
+msg = "Payload Powered ON\n\n ENTERING INIT \ STARTUP PHASE"
+ser.write(msg.encode())
+
+# Initialize Pico
+
+# Define and calibrate BNO055
+
+'''
+LAUNCH AND RECOVERY PHASE
+'''
+msg = "\nLAUNCH AND RECOVERY PHASE"
+ser.write(msg.encode())
+
+# Wait for launch detection
+
+'''
+DEPLOYMENT PHASE
+'''
+
+'''
+TASK INTERPRETATION AND EXECUTION PHASE
+'''
 
 # Wait for RAFCO transmission
 no_command = True
@@ -117,6 +145,10 @@ for code in codes:
             grayscale = False
     else:
         print("Invalid code.")
+
+'''
+DATA BACKUP AND ARCHIVAL PHASE
+'''
 
 camera.release() 
 cv2.destroyAllWindows()
