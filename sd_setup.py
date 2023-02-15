@@ -3,7 +3,7 @@ import sdcard
 import uos
 from imu_setup import imu
 from initializations import init_time
-from rocketTime import time_diff, get_time
+from rocket_time import time_diff, get_time
 
 # Assign chip select (CS) pin (and start it high)
 cs = machine.Pin(9, machine.Pin.OUT)
@@ -62,8 +62,3 @@ def write_to_imu_data():
         + "\n"
     )
 
-def write_to_imu_data(): 
-    imu_tuple = (*imu.mag(), *imu.gyro(), *imu.accel(), *imu.lin_acc(), *imu.gravity(), *imu.euler)
-    imu_data.write(
-        
-    )

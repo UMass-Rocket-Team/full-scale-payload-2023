@@ -1,5 +1,4 @@
-import RPi.GPIO as GPIO
-from rocketTime import time_diff, get_time
+from rocket_time import time_diff, get_time
 from initializations import init_time, accel_queue, time_queue, altitude_queue
 from controller import do_every, make_data_updater
 
