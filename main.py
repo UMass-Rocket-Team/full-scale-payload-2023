@@ -2,13 +2,19 @@ import cv2
 import os
 import datetime
 import time
+import warnings
 
 import serial
 import RPi.GPIO as GPIO
 
+from talker import Talker
+
 '''
 STARTUP / INIT PHASE
 '''
+
+# Define call sign
+call_sign = "XX4XXX"
 
 # Define XBee 
 GPIO.setmode(GPIO.BCM)
@@ -25,17 +31,21 @@ ser = serial.Serial(
 )
 
 # Send startup confirmation to XBee
-msg = "Payload Powered ON\n\n ENTERING INIT \ STARTUP PHASE"
+msg = "Payload Powered ON\n\nENTERING INIT \ STARTUP PHASE"
 ser.write(msg.encode())
 
-# Initialize Pico
+# Suppress all warnings [temporary]
+warnings.filterwarnings("ignore", message=".*global \.\./modules/videoio/src/cap_gstreamer.cpp*")
+
+# Initialize Pico communication
+pico = Talker()
 
 # Define and calibrate BNO055
 
 '''
 LAUNCH AND RECOVERY PHASE
 '''
-msg = "\nLAUNCH AND RECOVERY PHASE"
+msg = "\nENTERING LAUNCH AND RECOVERY PHASE\n"
 ser.write(msg.encode())
 
 # Wait for launch detection
@@ -43,10 +53,18 @@ ser.write(msg.encode())
 '''
 DEPLOYMENT PHASE
 '''
+msg = "\nENTERING DEPLOYMENT PHASE\n"
+ser.write(msg.encode())
 
 '''
 TASK INTERPRETATION AND EXECUTION PHASE
 '''
+msg = "\nENTERING TASK INTERPRETATION AND EXECUTION PHASE\n"
+ser.write(msg.encode())
+
+# Example RAFCO: XX4XXX C3 A1 D4 C3 F6 C3 F6 B2 B2 C3
+msg = "\nSend RAFCO command now...\n"
+ser.write(msg.encode())
 
 # Wait for RAFCO transmission
 no_command = True
@@ -56,9 +74,8 @@ while no_command:
     if len(msg) == 36:
         no_command = False
 
-# XX4XXX C3 A1 D4 C3 F6 C3 F6 B2 B2 C3
-
-call_sign = "XX4XXX"
+# Echo command recevied by radio
+ser.write("Message received: ", msg)
 
 # Dictionary to map codes to their corresponding command
 code_to_command = {
@@ -93,7 +110,6 @@ for i in range(10):
 grayscale = False
 
 # Read the input codes
-# text = input("Enter codes: ")
 codes = msg.split()
 
 # Check if the call sign is correct
@@ -149,6 +165,8 @@ for code in codes:
 '''
 DATA BACKUP AND ARCHIVAL PHASE
 '''
+msg = "\nDATA BACKUP AND ARCHIVAL PHASE"
+ser.write(msg.encode())
 
 camera.release() 
 cv2.destroyAllWindows()
