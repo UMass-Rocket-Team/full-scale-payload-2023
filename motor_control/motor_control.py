@@ -17,7 +17,7 @@ speed.freq(1000) # PWM frequency
 def map_speed(speed_percentage): # Takes values 0-100 as input and returns PWM values for use with the motor control
     return 30000 + 300 * speed_percentage
 
-def spin_forward(speed): # Speed controlled motor spinning forward
+def spin_forward_orientation(speed): # Speed controlled motor spinning forward
         s = int(map_speed(speed))
         speed = PWM(Pin(4))
         speed.freq(1000)
@@ -27,7 +27,7 @@ def spin_forward(speed): # Speed controlled motor spinning forward
         if speed == 0:
             brake()
 
-def spin_backward(speed): # Speed controlled motor spinning backward
+def spin_backward_orientation(speed): # Speed controlled motor spinning backward
         s = int(map_speed(speed))
         speed = PWM(Pin(4))
         speed.freq(1000)
@@ -37,7 +37,7 @@ def spin_backward(speed): # Speed controlled motor spinning backward
         if speed == 0:
             brake()
 
-def brake(): # Turn off the motor entirely
+def brake_orientation(): # Turn off the motor entirely
         print("brake pressed")
         IN1.low()  #stop
         IN2.low()
@@ -47,8 +47,8 @@ def brake(): # Turn off the motor entirely
 for i in range(0,100): #Sample loop demonstrating motor speed being controlled
     sleep(0.05)
     print(i)
-    spin_forward(i)
+    spin_forward_orientation(i)
 
 sleep(1) # wait for a second
-brake() # turn off the motor
+brake_orientation() # turn off the motor
 
