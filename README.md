@@ -1,12 +1,10 @@
-# full-scale-payload-2023
-
 # Branch: Image Processing
 
 ## For deployment in ARCHIE IP in I/O handler
 
 This branch contains all elements required for the team's filter, as well as general image formatting tools.
 
-## HorizonDetection(full-scale-payload-2023/HorizonDetection.py):
+## [HorizonDetection](full-scale-payload-2023/HorizonDetection.py):
 
 This file is responsible for horizon detection onboard ARCHIE utilizing OpenCV. 
 Input: Image
