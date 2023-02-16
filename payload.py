@@ -6,13 +6,21 @@ import time
 import serial
 import RPi.GPIO as GPIO
 
+from talker import Talker
+
+'''
+Author: Calista Greenway
+Project: UMass Rocket Team 2023 Primary Payload (ARCHIE)
+'''
 
 class CameraController:
     def __init__(self):
+        # Define GPIO pins
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
-        GPIO.setup(23, GPIO.OUT)
+        GPIO.setup(23, GPIO.OUT) # XBee
 
+        # Initialize XBee serial communication 
         self.ser = serial.Serial(
             port='/dev/ttyS0',
             baudrate=9600,
@@ -22,11 +30,10 @@ class CameraController:
             timeout=1
         )
 
-        self.camera_index = self._find_available_camera()
-
+        self.camera_index = self.find_available_camera()
         self.grayscale_mode = False
 
-    def _find_available_camera(self):
+    def find_available_camera(self):
         for i in range(10):
             cap = cv2.VideoCapture(i)
             if cap.isOpened():
@@ -35,42 +42,45 @@ class CameraController:
                 return i
         return 0
 
-    def _wait_for_command(self):
+    def wait_for_command(self, call_sign):
         no_command = True
-
+        # Wait for RAFCO command from ground station
         while no_command:
             msg = self.ser.readline().strip().decode()
+            codes = msg.split()
+            # Verify call sign
             if len(msg) == 36:
-                no_command = False
+                if codes[0] == call_sign:
+                    # Remove the call sign from the codes
+                    codes = codes[1:]
+                    return codes
 
-        return msg
-
-    def _process_command(self, command):
+    def process_command(self, command):
         if command == "A1":
-            self._turn_camera(60)
+            self.turn_camera(60)
         elif command == "B2":
-            self._turn_camera(-60)
+            self.turn_camera(-60)
         elif command == "C3":
-            self._take_picture()
+            self.take_picture()
         elif command == "D4":
             self.grayscale_mode = True
         elif command == "E5":
             self.grayscale_mode = False
         elif command == "F6":
-            self._rotate_image(180)
+            self.rotate_image(180)
         elif command == "G7":
-            self._apply_special_effects()
+            self.apply_special_effects()
         elif command == "H8":
-            self._remove_all_filters()
+            self.remove_all_filters()
 
-    def _turn_camera(self, degrees):
+    def turn_camera(self, degrees):
         # Send message to Pico
         # Turn camera to the specified degrees
         pass
 
-    def _take_picture(self):
+    def take_picture(self):
         camera = cv2.VideoCapture(self.camera_index)
-        time.sleep(5)
+        time.sleep(1)
         ret, frame = camera.read()
         if ret:
             if self.grayscale_mode:
@@ -84,33 +94,63 @@ class CameraController:
             print("Failed to take image.")
         camera.release()
 
-    def _rotate_image(self, degrees):
+    def rotate_image(self, degrees):
         # Rotate the most recent image by the specified degrees
         pass
 
-    def _apply_special_effects(self):
+    def apply_special_effects(self):
         # Apply special effects to the most recent image
         pass
 
-    def _remove_all_filters(self):
+    def remove_all_filters(self):
         # Remove all filters from the most recent image
         pass
 
     def run(self):
-        msg = self._wait_for_command()
+        '''
+        STARTUP / INIT PHASE
+        '''
+        # Send startup confirmation to XBee
+        msg = "Payload Powered ON\n\nENTERING INIT \ STARTUP PHASE"
+        self.ser.write(msg.encode())
+        
+        # Define call sign
         call_sign = "XX4XXX"
-        codes = msg.split()
 
-        if codes[0] != call_sign:
-            print("Invalid call sign.")
-            exit()
+        # Initialize Pico communication
+        pico = Talker()
 
-        codes = codes[1:]
+        # Define and calibrate IMU
+        # Define and calibrate altitude sensor
+        # [CODE HERE]
 
-        for code in codes:
-            if code in code_to_command:
-                command = code_to_command[code]
-                print(f"Command given: {command}")
-                self._process_command(code)
-            else:
-               pass
+        '''
+        LAUNCH AND RECOVERY PHASE
+        '''
+        msg = "\nENTERING LAUNCH AND RECOVERY PHASE\n"
+        self.ser.write(msg.encode())
+
+        # Wait for launch detection
+        # Wait for landing detection
+        # [CODE HERE]
+
+        '''
+        DEPLOYMENT PHASE
+        '''
+        msg = "\nENTERING DEPLOYMENT PHASE\n"
+        self.ser.write(msg.encode())
+
+        '''
+        TASK INTERPRETATION AND EXECUTION PHASE
+        '''
+        msg = "\nENTERING TASK INTERPRETATION AND EXECUTION PHASE\n"
+        self.ser.write(msg.encode())
+
+        # Request RAFCO from ground station
+        msg = "\nSend RAFCO command now!\n"
+        self.ser.write(msg.encode())
+
+        self.wait_for_command(call_sign)
+
+archie = CameraController()
+archie.run()
