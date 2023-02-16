@@ -98,9 +98,7 @@ uart.write("\n\nAltitude has been calculated. Ready for flight.")
 uart.write("\nAltitude has been set: " + str(ALTITUDE_THRESHOLD))
 uart.write("\nTime (ms): " + str(time_queue.peek()))
 data_updater = None
-
-
-# -----BEFORE FLIGHT PHASE-----
+#------BEFORE FLIGHT PHASE-----
 
 # Reset time and acceleration queues
 queue_frequency = 50  # Hz
