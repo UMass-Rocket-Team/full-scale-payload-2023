@@ -1,14 +1,14 @@
 from rocket_time import time_diff, get_time
-from initializations import init_time, accel_queue, time_queue, altitude_queue
+from initializations import accel_queue, time_queue, altitude_queue
 from controller import do_every, make_data_updater
 
 
 from uart_setup import uart
 
 uart.write("\nInitializing IMU\n")
-from imu_setup import imu, write_to_imu_data, calibration_fn
+from imu_setup import imu, calibration_fn
 uart.write("\nIMU initialized. Initializing SD Card\n")
-from sd_setup import imu_data, flight_log, get_valid_file_name
+from sd_setup import flight_log, write_to_imu_data
 uart.write("\n SD Card initialized.\n")
 
 
@@ -70,13 +70,34 @@ def find_reference_gravity():  # CHECK HERE FOR SOMEWHAT ARBITRARY VALUES
 
 
 do_every([data_updater, find_reference_gravity],[accel_sample_interval, check_interval])
-data_updater = None
 
 flight_log.write("\nGravity has been set: " + str(GRAVITY))
 flight_log.write("\nTime (ms): " + str(time_queue.peek()))
 uart.write("\n\nGravity has been calculated. Ready for flight.")
 uart.write("\nGravity has been set: " + str(GRAVITY))
 uart.write("\nTime (ms): " + str(time_queue.peek()))
+
+def find_reference_altitude():
+    global ALTITUDE_THRESHOLD
+    if time_diff(get_time(), time_queue.peek()) < check_interval * 0.5:
+        return
+    mean = altitude_queue.getMean()
+    variance = altitude_queue.getVariance()
+    if variance < 10:
+        flight_log.write("\nCalculated Altitude: " + str(mean))
+        uart.write("\nCalculated Altitude: " + str(mean))
+        ALTITUDE_THRESHOLD = mean + 500
+        # ARBITRARY: Multiply by 0.9 to give some room for error
+        raise StopIteration
+
+do_every([data_updater, find_reference_altitude],[accel_sample_interval, check_interval])
+
+flight_log.write("\nAltitude has been set: " + str(ALTITUDE_THRESHOLD))
+flight_log.write("\nTime (ms): " + str(time_queue.peek()))
+uart.write("\n\nAltitude has been calculated. Ready for flight.")
+uart.write("\nAltitude has been set: " + str(ALTITUDE_THRESHOLD))
+uart.write("\nTime (ms): " + str(time_queue.peek()))
+data_updater = None
 
 
 # -----BEFORE FLIGHT PHASE-----
