@@ -6,11 +6,42 @@ This branch contains all elements required for the team's filter, as well as gen
 
 ## [HorizonDetection](HorizonDetection.py):
 
-This file is responsible for horizon detection onboard ARCHIE utilizing OpenCV. 
+This file is responsible for horizon detection onboard ARCHIE utilizing OpenCV. Implementation relies on use of the cv2 library, so import it before use.
 Input: Image
 Output: Image with detected horizon, Image with detected horizon and rotational correction applied
 
-#### HorizonDetection V1 (current):
+#### Example Usage:
+
+The below code is an example of implementation for just horizon detection:
+
+```
+test = HorizonDetection('InputImage.jpg')
+testIm = test.detectHorizon()
+cv2.imshow('Result', testIm)
+```
+
+While this snippet is an example of rotational correction implementation:
+
+```
+test = HorizonDetection('InputImage.jpg')
+test.detectHorizon()
+testIm = test.rotatetoHorizon()
+cv2.imshow('Result', testIm)
+```
+
+NOTE: Use the below to terminate image display commands
+
+```
+cv2.destroyAllWindows()
+```
+
+## Version Log:
+
+#### HorizonDetection V2 (current):
+
+* Format as class to permit import of methods
+
+#### HorizonDetection V1:
 
 * Canny Edge detection implemented
 * Hough lines fitting implemented
@@ -20,5 +51,5 @@ Output: Image with detected horizon, Image with detected horizon and rotational 
 
 #### TODO:
 
-* Format as class to permit import of methods
+
 * Crop image to rotated domain (ignore deadspace)
