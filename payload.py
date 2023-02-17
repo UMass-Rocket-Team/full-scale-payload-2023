@@ -30,7 +30,17 @@ class CameraController:
             timeout=1
         )
 
+        # Initialize camera
         self.camera_index = self.find_available_camera()
+
+        # Initialize Pico communication
+        self.pico = Talker()
+        self.pico.send('on()')
+        print("Pico init...")
+        time.sleep(3)
+        self.pico.send('off()')
+
+        # Define default image modes
         self.grayscale_mode = False
         self.upsidedown_mode = False
         self.special_mode = False
@@ -81,7 +91,13 @@ class CameraController:
 
     def turn_camera(self, degrees):
         # Send message to Pico
-        # Turn camera to the specified degrees
+        # Turn camera to the specified degrees (left or right)
+        if degrees == 60:
+            self.pico.send('rotate_camera(right)')
+            self.pico.receive()
+        if degrees == -60:
+            self.pico.send("rotate_camera(left)")
+            self.pico.receive()
         pass
 
     def take_picture(self):
@@ -117,12 +133,6 @@ class CameraController:
         
         # Define call sign
         call_sign = "XX4XXX"
-
-        # Initialize Pico communication
-        # pico = Talker()
-        # pico.send('on()')
-        # time.sleep(1)
-        # pico.send('off()')
 
         # Define and calibrate IMU
         # pico.send('calibrateIMU()')
