@@ -2,6 +2,7 @@ import cv2
 import os
 import datetime
 import time
+import warnings
 
 import serial
 import RPi.GPIO as GPIO
@@ -30,12 +31,15 @@ class CameraController:
             timeout=1
         )
 
+        # Suppress all OpenCV warnings
+        warnings.filterwarnings('ignore')
+
         self.camera_index = self.find_available_camera()
         self.grayscale_mode = False
 
     def find_available_camera(self):
         for i in range(10):
-            cap = cv2.VideoCapture(i)
+            cap = cv2.VideoCapture(i, cv2.CAP_GSTREAMER)
             if cap.isOpened():
                 print(f"Camera with index {i} is available.")
                 cap.release()
@@ -44,16 +48,18 @@ class CameraController:
 
     def wait_for_command(self, call_sign):
         no_command = True
+        print("Waiting for RACFO from ground station.")
         # Wait for RAFCO command from ground station
         while no_command:
             msg = self.ser.readline().strip().decode()
             codes = msg.split()
             # Verify call sign
-            if len(msg) == 36:
+            if len(msg) >= 6:
                 if codes[0] == call_sign:
                     # Remove the call sign from the codes
                     codes = codes[1:]
                     return codes
+            # print("RAFCO incomplete. Please send another message from Xbee.")
 
     def process_command(self, command):
         if command == "A1":
@@ -89,7 +95,7 @@ class CameraController:
             image_path = os.path.join("images", f"image_{timestamp}.jpg")
             cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
             cv2.imwrite(image_path, frame)
-            print(f"Image taken and stored as {image_path}")
+            print(f"Image taken and stored as {image_path}\n")
         else:
             print("Failed to take image.")
         camera.release()
@@ -110,6 +116,8 @@ class CameraController:
         '''
         STARTUP / INIT PHASE
         '''
+        print("Phase 1: Start Up / Init")
+
         # Send startup confirmation to XBee
         msg = "Payload Powered ON\n\nENTERING INIT \ STARTUP PHASE"
         self.ser.write(msg.encode())
@@ -119,14 +127,19 @@ class CameraController:
 
         # Initialize Pico communication
         pico = Talker()
+        pico.send('on()')
+        time.sleep(1)
+        pico.send('off()')
 
         # Define and calibrate IMU
+        pico.send('calibrateIMU()')
         # Define and calibrate altitude sensor
         # [CODE HERE]
 
         '''
         LAUNCH AND RECOVERY PHASE
         '''
+        print("Phase 2: Launch and Recovery")
         msg = "\nENTERING LAUNCH AND RECOVERY PHASE\n"
         self.ser.write(msg.encode())
 
@@ -137,20 +150,35 @@ class CameraController:
         '''
         DEPLOYMENT PHASE
         '''
+        print("Phase 3: Deployment")
         msg = "\nENTERING DEPLOYMENT PHASE\n"
         self.ser.write(msg.encode())
 
         '''
         TASK INTERPRETATION AND EXECUTION PHASE
         '''
+        print("Phase 4: Task Interpretationa and Execution\n")
         msg = "\nENTERING TASK INTERPRETATION AND EXECUTION PHASE\n"
         self.ser.write(msg.encode())
 
         # Request RAFCO from ground station
-        msg = "\nSend RAFCO command now!\n"
+        msg = "\nSend RAFCO now!\n"
         self.ser.write(msg.encode())
 
-        self.wait_for_command(call_sign)
+        codes = self.wait_for_command(call_sign)
+        print("RAFCO Received!")
+
+        for code in codes:
+            print("Now executing command:", code)
+            self.process_command(code)
+        print("All commands have been executed.")
+
+        '''
+        DATA BACKUP AND ARCHIVAL PHASE
+        '''
+        print("Phase 5: Data Backup and Archival")
+        msg = "\nDATA BACKUP AND ARCHIVAL PHASE"
+        self.ser.write(msg.encode())
 
 archie = CameraController()
 archie.run()
