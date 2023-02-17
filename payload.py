@@ -2,7 +2,6 @@ import cv2
 import os
 import datetime
 import time
-import warnings
 
 import serial
 import RPi.GPIO as GPIO
@@ -31,11 +30,10 @@ class CameraController:
             timeout=1
         )
 
-        # Suppress all OpenCV warnings
-        warnings.filterwarnings('ignore')
-
         self.camera_index = self.find_available_camera()
         self.grayscale_mode = False
+        self.upsidedown_mode = False
+        self.special_mode = False
 
     def find_available_camera(self):
         for i in range(10):
@@ -62,22 +60,24 @@ class CameraController:
             # print("RAFCO incomplete. Please send another message from Xbee.")
 
     def process_command(self, command):
-        if command == "A1":
+        if command == "A1": # Turn camera 60 deg to the right
             self.turn_camera(60)
-        elif command == "B2":
+        elif command == "B2": # Turn camera 60 deg to the left
             self.turn_camera(-60)
-        elif command == "C3":
+        elif command == "C3": # Take picture
             self.take_picture()
-        elif command == "D4":
+        elif command == "D4": # Change camera mode from color to grayscale
             self.grayscale_mode = True
-        elif command == "E5":
+        elif command == "E5": # Change camera mode back from grayscale to color
             self.grayscale_mode = False
-        elif command == "F6":
-            self.rotate_camera_gimbal(180)
-        elif command == "G7":
-            self.apply_special_effects()
-        elif command == "H8":
-            self.remove_all_filters()
+        elif command == "F6": # Rotate image 180 deg (upside down)
+            self.upsidedown_mode = True
+        elif command == "G7": # Special effects filter
+            self.special_mode = True
+        elif command == "H8": # Remove all filters
+            self.grayscale_mode = False
+            self.upsidedown_mode = False
+            self.special_mode = False
 
     def turn_camera(self, degrees):
         # Send message to Pico
@@ -91,6 +91,11 @@ class CameraController:
         if ret:
             if self.grayscale_mode:
                 frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            if self.upsidedown_mode:
+                height = frame.shape[0]
+                width = frame.shape[1]
+                rotation_matrix = cv2.getRotationMatrix2D((width/2, height/2), 180, 1)
+                frame = cv2.warpAffine(frame, rotation_matrix, (width, height))
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             image_path = os.path.join("images", f"image_{timestamp}.jpg")
             cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
@@ -99,18 +104,6 @@ class CameraController:
         else:
             print("Failed to take image.")
         camera.release()
-
-    def rotate_camera_gimbal(self, degrees):
-        # Rotate the most recent image by the specified degrees
-        pass
-
-    def apply_special_effects(self):
-        # Apply special effects to the most recent image
-        pass
-
-    def remove_all_filters(self):
-        # Remove all filters from the most recent image
-        pass
 
     def run(self):
         '''
@@ -126,13 +119,13 @@ class CameraController:
         call_sign = "XX4XXX"
 
         # Initialize Pico communication
-        pico = Talker()
-        pico.send('on()')
-        time.sleep(1)
-        pico.send('off()')
+        # pico = Talker()
+        # pico.send('on()')
+        # time.sleep(1)
+        # pico.send('off()')
 
         # Define and calibrate IMU
-        pico.send('calibrateIMU()')
+        # pico.send('calibrateIMU()')
         # Define and calibrate altitude sensor
         # [CODE HERE]
 
