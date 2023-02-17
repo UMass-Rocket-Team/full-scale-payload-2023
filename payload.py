@@ -35,8 +35,11 @@ class CameraController:
 
         # Initialize Pico communication
         self.pico = Talker()
+
         self.pico.send('on()')
         print("Pico init...")
+        self.pico.send('2 + 2')
+        self.pico.receive()
         time.sleep(3)
         self.pico.send('off()')
 
@@ -156,6 +159,34 @@ class CameraController:
         print("Phase 3: Deployment")
         msg = "\nENTERING DEPLOYMENT PHASE\n"
         self.ser.write(msg.encode())
+
+        # Spin orientation motor
+        # self.pico.send('spin_forward_orientation(1)')
+        # time.sleep(3)
+
+        # Orientation motor control
+        for i in range(0, 100):
+            time.sleep(0.05)
+            print(i)
+            self.pico.send('spin_forward_orientation(2)')
+        time.sleep(1)
+        self.pico.send('brake_orientation()')
+
+        # Linear motor control
+        for i in range(0, 100):
+            time.sleep(0.05)
+            print(i)
+            self.pico.send('spin_forward_linear(' + str(i) + ')')
+        time.sleep(1)
+        self.pico.send('brake_linear()')
+
+        # Verical motor control
+        for i in range(0, 100):
+            time.sleep(0.05)
+            print(i)
+            self.pico.send('spin_forward_vertical(' + str(i) + ')')
+        time.sleep(1)
+        self.pico.send('brake_vertical()')
 
         '''
         TASK INTERPRETATION AND EXECUTION PHASE
