@@ -6,12 +6,10 @@ from controller import do_every, make_data_updater
 from uart_setup import uart
 
 uart.write("\nInitializing IMU\n")
-from imu_setup import imu, calibration_fn
+from imu_setup import imu#, calibration_fn
 uart.write("\nIMU initialized. Initializing SD Card\n")
 from sd_setup import flight_log, write_to_imu_data
 uart.write("\n SD Card initialized.\n")
-
-
 
 
 imu_data_frequency = 100  # Hz
@@ -25,7 +23,6 @@ def calibration_fn():
         flight_log.write("\nCALIBRATED!")
         # bytearray(b'\xfa\xff\x00\x00\xe9\xffF\x04\x13\x01|\xff\xff\xff\x00\x00\x00\x00\xe8\x03\xec\x01')
         raise StopIteration
-
 
 # Check for calibration every 1000 ms
 

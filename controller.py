@@ -1,7 +1,8 @@
 # calculate maximum size of queue needed by frequency (samples/s) * interval to keep track of (ms) / 1000 (ms/s) * 1.25 room for error
-from math import floor, hypot
+#from math import floor, hypot
+import math
 import time
-from queue import Queue
+from rocket_queue import Queue
 from imu_setup import imu
 from pressure_sensor_setup import pressure_sensor
 
