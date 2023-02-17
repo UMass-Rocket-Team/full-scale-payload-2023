@@ -73,7 +73,7 @@ class CameraController:
         elif command == "E5":
             self.grayscale_mode = False
         elif command == "F6":
-            self.rotate_image(180)
+            self.rotate_camera_gimbal(180)
         elif command == "G7":
             self.apply_special_effects()
         elif command == "H8":
@@ -100,7 +100,7 @@ class CameraController:
             print("Failed to take image.")
         camera.release()
 
-    def rotate_image(self, degrees):
+    def rotate_camera_gimbal(self, degrees):
         # Rotate the most recent image by the specified degrees
         pass
 
