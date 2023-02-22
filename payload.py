@@ -59,7 +59,7 @@ class CameraController:
 
     def wait_for_command(self, call_sign):
         no_command = True
-        print("Waiting for RACFO from ground station.")
+        print("Waiting for RAFCO from ground station.")
         # Wait for RAFCO command from ground station
         while no_command:
             msg = self.ser.readline().strip().decode()
