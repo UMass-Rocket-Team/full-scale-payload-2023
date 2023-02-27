@@ -1,4 +1,3 @@
-#from statistics import mean, variance
 from statistics_indepfunc import mean, variance
 
 class QueueOverflowException(Exception):

@@ -2,7 +2,7 @@ import machine
 import sdcard
 import uos
 from imu_setup import imu
-from initializations import init_time
+from idk import init_time
 from rocket_time import time_diff, get_time
 
 # Assign chip select (CS) pin (and start it high)
