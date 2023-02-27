@@ -32,8 +32,8 @@ def calibration_fn():
         raise StopIteration
 
 # Check for calibration every 1000 ms
-
-controller.do_every([calibration_fn], [1000])
+#Comment out for testing
+#controller.do_every([calibration_fn], [1000])
 
 # The IMU is calibrated at this point
 # The reference gravity must be calculated in setup for the rest of the program to use
@@ -165,5 +165,7 @@ uart.write("\n\nLanding Detected")
 uart.write("\nTime (ms): " + str(controller.time_queue.peek()))
 
 # -----AFTER FLIGHT PHASE-----
-from post_landing import *
+print("Post Landing Phase Would Go Here")
+uart.close()
+#from post_landing import *
 
