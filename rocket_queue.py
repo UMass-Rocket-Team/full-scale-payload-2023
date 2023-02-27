@@ -9,7 +9,7 @@ class Queue():
     def __init__(self, size, threshold): # initializing the class
         self.size = size
         # initializing queue with none
-        self.array = [None for i in range(size)]
+        self.array = [None] * size
         self.front = self.rear = -1
         self.threshold = threshold
         self.num_above_threshold = 0

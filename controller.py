@@ -13,8 +13,8 @@ class RocketController(metaclass=Singleton):
         self.time_queue = None
         self.accel_queue = None
         self.altitude_queue = None
-        self.imu = intializations.RocketIMU().imu
-        self.pressure_sensor = intializations.RocketPressureSensor().pressure_sensor
+        self.imu = intializations.RocketIMU()
+        self.pressure_sensor = intializations.RocketPressureSensor()
         self.timer = rocket_time.RocketTimer()
     # Inputs: Array of functions that should be run every x ms
     # 		Array of intervals of time between each run of its corresponding function
