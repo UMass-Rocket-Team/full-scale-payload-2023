@@ -1,2 +1,0 @@
-
-pressure_sensor = None

@@ -3,16 +3,11 @@ import rocket_time
 from math import floor, hypot
 from rocket_queue import Queue
 import intializations
-
+from singleton import Singleton
 def calculate_max_size(sample_frequency, queue_interval):
     return floor(sample_frequency * queue_interval / 1000 * 1.25)
 
-class Singleton(type):
-    _instances = {}
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
+
 class RocketController(metaclass=Singleton):
     def __init__(self):
         self.time_queue = None

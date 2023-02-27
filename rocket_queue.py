@@ -1,4 +1,4 @@
-from statistics_indepfunc import mean, variance
+from archive.statistics_indepfunc import mean, variance
 
 class QueueOverflowException(Exception):
     pass
