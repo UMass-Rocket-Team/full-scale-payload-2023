@@ -2,7 +2,7 @@
 import rocket_time
 from math import floor, hypot
 from rocket_queue import Queue
-import intializations
+import rocket_intializations
 from singleton import Singleton
 def calculate_max_size(sample_frequency, queue_interval):
     return floor(sample_frequency * queue_interval / 1000 * 1.25)
@@ -13,8 +13,8 @@ class RocketController(metaclass=Singleton):
         self.time_queue = None
         self.accel_queue = None
         self.altitude_queue = None
-        self.imu = intializations.RocketIMU()
-        self.pressure_sensor = intializations.RocketPressureSensor()
+        self.imu = rocket_intializations.RocketIMU()
+        self.pressure_sensor = rocket_intializations.RocketPressureSensor()
         self.timer = rocket_time.RocketTimer()
     # Inputs: Array of functions that should be run every x ms
     # 		Array of intervals of time between each run of its corresponding function

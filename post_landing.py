@@ -2,7 +2,7 @@ import machine
 import time
 from archive.imu_setup import imu
 from archive.uart_setup import uart
-from controller import do_every
+from rocket_controller import do_every
 
 # -----LANDED PHASE-----
 

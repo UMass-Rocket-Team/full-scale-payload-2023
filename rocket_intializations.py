@@ -1,6 +1,6 @@
 # Import libraries
 import os
-from bno055 import BNO055
+#from bno055 import BNO055 #Uncomment when using actual IMU
 import rocket_time
 from time import sleep
 import simulated_data
@@ -14,10 +14,21 @@ class RocketIMU(metaclass=Singleton):
         #FOR TESTING
         self.rocket_timer = rocket_time.RocketTimer()
     def accel(self):
-        if 5000 < self.rocket_timer.time_since_init_ms() < 10000:
-            return simulated_data.generate_imu_data_low()
-        else:
+        if 5000 < self.rocket_timer.time_since_init_ms() < 8000:
             return simulated_data.generate_imu_data_high()
+        else:
+            return simulated_data.generate_imu_data_low()
+    def mag(self):
+        return (0, 0, 0)
+    def gyro(self):
+        return (0, 0, 0)
+    def temperature(self):
+        return 0
+    def gravity(self):
+        return (0, 0, 0)
+    def lin_acc(self):
+        return (0, 0, 0)
+    
         
 class RocketPressureSensor(metaclass=Singleton):
     def __init__(self):
@@ -26,9 +37,9 @@ class RocketPressureSensor(metaclass=Singleton):
         self.rocket_timer = rocket_time.RocketTimer()
     def altitude(self):
         if 5000 < self.rocket_timer.time_since_init_ms() < 10000:
-            return simulated_data.generate_pressure_data_low()
+            return simulated_data.generate_altitude_data_high()
         else:
-            return simulated_data.generate_pressure_data_high()
+            return simulated_data.generate_altitude_data_low()
 class RocketRadio(metaclass=Singleton):
     def __init__(self):
         # # setup uart object (uart0 maps to pin 1 on the pico)
@@ -43,7 +54,7 @@ class RocketRadio(metaclass=Singleton):
         
         #TESTING ONLY
         #Create a txt file assigned to self.uart
-        self.uart = open(get_valid_file_name("/sd/uart.txt"), "w")
+        self.uart = open(get_valid_file_name(r'sd/uart.txt'), "w")
     def write(self, message):
         self.uart.write(message)
     def close(self):#Only for testing purposes
@@ -70,15 +81,17 @@ class RocketSDCard(metaclass=Singleton):
 
         #TESTING ONLY
         self.files_dictionary = {}
-        self.files_dictionary["imu_data"] = open(get_valid_file_name("/sd/imu_data.csv"), "w")
-        self.files_dictionary["imu_data"].write("Time, Temperature, Mag X, Mag Y, Mag Z, Gyro X, Gyro Y, Gyro Z, Acc X, Acc Y, Acc Z, Lin Acc X, Lin Acc Y, Lin Acc Z, Gravity X, Gravity Y, Gravity Z, Euler X, Euler Y, Euler Z\n")
-        self.files_dictionary["flight_log"] = open(get_valid_file_name("/sd/flight_log.txt"), "w")
+        self.imu_data_path = r'sd/imu_data.csv'
+        self.flight_log_path = r'sd/flight_log.txt'
+        self.files_dictionary[self.imu_data_path] = open(get_valid_file_name(self.imu_data_path), "w")
+        self.files_dictionary[self.imu_data_path].write("Time, Temperature, Mag X, Mag Y, Mag Z, Gyro X, Gyro Y, Gyro Z, Acc X, Acc Y, Acc Z, Lin Acc X, Lin Acc Y, Lin Acc Z, Gravity X, Gravity Y, Gravity Z, Euler X, Euler Y, Euler Z\n")
+        self.files_dictionary[self.flight_log_path] = open(get_valid_file_name(self.flight_log_path), "w")
 
         self.imu = RocketIMU()
         self.rocket_timer = rocket_time.RocketTimer()
     def write_to_imu_data(self):
         format_str = "{:5.3f},{:5.3f},{:5.3f},"
-        self.files_dictionary["imu_data"].write(
+        self.files_dictionary[self.imu_data_path].write(
             str(self.rocket_timer.time_since_init_ms())
             + ","
             + str(self.imu.temperature())
@@ -90,7 +103,7 @@ class RocketSDCard(metaclass=Singleton):
             + format_str.format(*self.imu.gravity())
         )
     def write_to_flight_log(self, message):
-        self.files_dictionary["flight_log"].write(message)
+        self.files_dictionary[self.flight_log_path].write(message)
     def save_files(self):
         for file in self.files_dictionary:
             self.files_dictionary[file].close()
