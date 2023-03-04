@@ -5,7 +5,7 @@ class DataSimulator(metaclass=singleton.Singleton):
     def __init__(self):
         #open a csv file located in the downloads folder with the data to read from
         #read the data from the csv file
-        with open(r'/Users/demetriliousas/Downloads/sim_data.csv', "r") as f:
+        with open(r'simulation_files/sim_data.csv', "r") as f:
             self.data = read_csv(f)
         #create a new rocket timer
         self.timer = rocket_time.RocketTimer()

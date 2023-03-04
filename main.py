@@ -115,13 +115,14 @@ data_updater = rocket_controller.make_data_updater(queue_frequency, burn_time, (
 
 def check_launch():
     print("Checking for launch")
+    print("Time since start: " + str(rocket_timer.time_since_init_ms()))
     if rocket_timer.time_since_ms(rocket_controller.time_queue.peek()) < 0.5 * burn_time:
         return  # Dont check for launch if there's not enough data in the queue yet
     uart.write("\n Launch Threshold Proportion: " + str(rocket_controller.accel_queue.get_proportion_above_threshold()))
-    print("Checking accel" + str(rocket_controller.accel_queue.get_proportion_above_threshold()))
+    print("Checking accel: " + str(rocket_controller.accel_queue.get_proportion_above_threshold()))
     if rocket_controller.accel_queue.get_proportion_above_threshold() < 0.95:
         return  # ARBITRARY: If less than 95% of the data is above the gravity threshold, then the rocket has not launched
-    print("Checking altitude" + str(rocket_controller.altitude_queue.get_proportion_above_threshold()))
+    print("Checking altitude: " + str(rocket_controller.altitude_queue.get_proportion_above_threshold()))
     if rocket_controller.altitude_queue.get_proportion_above_threshold() > 0.95:
         raise StopIteration  # ARBITRARY: If more than 95% of the data is above the altitude threshold, then the rocket has launched
 
@@ -153,12 +154,14 @@ data_updater = rocket_controller.make_data_updater(queue_frequency, check_interv
 def check_landing():
     if rocket_timer.time_since_ms(rocket_controller.time_queue.peek()) < 0.5 * check_interval:
         return  # Dont check for landing if there's not enough data in the queue yet
+    print("Checking for landing")
+    print("Time since start: " + str(rocket_timer.time_since_init_ms()))
     uart.write("\n Landing Threshold Proportion: " + str(rocket_controller.accel_queue.get_proportion_above_threshold()))
-    print("Checking accel" + str(rocket_controller.accel_queue.get_proportion_above_threshold()))
+    print("Checking accel: " + str(rocket_controller.accel_queue.get_proportion_above_threshold()))
     if rocket_controller.accel_queue.get_proportion_above_threshold() > 0.05:
         return
     # ARBITRARY: If more than 5% of the data is above the gravity threshold, then the rocket has not landed
-    print("Checking altitude" + str(rocket_controller.altitude_queue.get_proportion_above_threshold()))
+    print("Checking altitude: " + str(rocket_controller.altitude_queue.get_proportion_above_threshold()))
     if rocket_controller.altitude_queue.get_proportion_above_threshold() < 0.05:
         raise StopIteration
     # ARBITRARY: If less than 5% of the data is above the altitude threshold, then the rocket has landed
