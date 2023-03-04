@@ -1,64 +1,44 @@
-from archive.statistics_indepfunc import mean, variance
+from collections import deque
+from statistics import mean, variance
 
-class QueueOverflowException(Exception):
-    pass
-class EmptyQueueException(Exception):
-    pass
-class Queue():
-    # constructor
-    def __init__(self, size, threshold): # initializing the class
-        self.size = size
-        # initializing queue with none
-        self.array = [None] * size
-        self.front = self.rear = -1
+class RocketQueue(deque):
+    def __init__(self,max_len=None, threshold=None):
+        super().__init__(maxlen=max_len)
         self.threshold = threshold
-        self.num_above_threshold = 0
-        self.num_data_points = 0
-    def set_threshold(self, threshold):
-        self.threshold = threshold
-    def enqueue(self, data):
-        self.num_data_points +=1
-        if self.threshold != None and data > self.threshold:
-            self.num_above_threshold += 1
-        # condition if queue is full
-        if ((self.rear + 1) % self.size == self.front):
-            print(" Queue is Full\n")
-            raise QueueOverflowException
-        # condition for empty queue
-        elif (self.front == -1):
-            self.front = 0
-            self.rear = 0
-            self.array[self.rear] = data
-        else:
-            # next position of rear
-            self.rear = (self.rear + 1) % self.size
-            self.array[self.rear] = data
+        self.count = 0
+    
+    def enqueue(self, item):
+        super().append(item)
+        if self.threshold != None and item > self.threshold:
+            self.count += 1
+    
     def dequeue(self):
-        if (self.front == -1): # condition for empty queue
-            print ("Queue is Empty")
-            raise EmptyQueueException
-        temp=self.array[self.front]
-        self.array[self.front] = None
-        self.num_data_points -= 1
-        if self.threshold != None and temp > self.threshold:
-            self.num_above_threshold -= 1
-        # condition for only one element
-        if (self.front == self.rear):
-            self.front = -1
-            self.rear = -1
-        else:
-            self.front = (self.front + 1) % self.size
-        return temp
-    def get_array(self):
-        return self.array
-    def peek(self):
-        return self.array[self.front]
-    def get_size(self):
-        return self.num_data_points
+        item = super().popleft()
+        if self.threshold != None and item > self.threshold:
+            self.count -= 1
+        return item
+    def size(self):
+        return len(self)
+    def num_greater_than_threshold(self):
+        return self.count
+    
     def get_proportion_above_threshold(self):
-        #catch div by 0
-        return self.num_above_threshold/self.num_data_points
+        if self.size() == 0:
+            return 0
+        return self.num_greater_than_threshold() / self.size()
+    
     def get_mean(self):
-        return mean(self.array)
+        if self.size() == 0:
+            return None
+        return mean(self)
+    
     def get_variance(self):
-        return variance(self.array)
+        if self.size() == 0:
+            return None
+        return variance(self)
+    def peek(self):
+        if self.size() == 0:
+            print("Queue is empty")
+            return None
+        return self[0]
+    

@@ -1,7 +1,7 @@
 # calculate maximum size of queue needed by frequency (samples/s) * interval to keep track of (ms) / 1000 (ms/s) * 1.25 room for error
 import rocket_time
 from math import floor, hypot
-from rocket_queue import Queue
+from rocket_queue import RocketQueue
 import rocket_intializations
 from singleton import Singleton
 def calculate_max_size(sample_frequency, queue_interval):
@@ -19,12 +19,11 @@ class RocketController(metaclass=Singleton):
     # Inputs: Array of functions that should be run every x ms
     # 		Array of intervals of time between each run of its corresponding function
     # Outputs: None
-    # Each function in func_arr should raise an exception if the loop should stop being run
+    # A function in func_arr must raise a StopIteration exception to stop the loop
     def do_every(self, func_arr, interval_arr):
         prev_times = [-999999] * len(func_arr)
         while True:
             for i, func in enumerate(func_arr):
-                #if time.ticks_diff(time.ticks_ms(), prev_times[i]) > interval_arr[i]:
                 if rocket_time.RocketTimer.time_since_ms(prev_times[i]) > interval_arr[i]:
                     try:
                         func()
@@ -37,15 +36,15 @@ class RocketController(metaclass=Singleton):
     # Output: A function that can be passed into do_every to update the time and acceleration queues
     def make_data_updater(self, queue_frequency, time_interval, threshold_tuple):
         max_size = calculate_max_size(queue_frequency, time_interval)
-        self.time_queue = Queue(max_size, threshold_tuple[0])
-        self.accel_queue = Queue(max_size, threshold_tuple[1])
-        self.altitude_queue = Queue(max_size, threshold_tuple[2])
+        self.time_queue = RocketQueue(max_size, threshold_tuple[0])
+        self.accel_queue = RocketQueue(max_size, threshold_tuple[1])
+        self.altitude_queue = RocketQueue(max_size, threshold_tuple[2])
         def updater():
             cur_time = self.timer.time_since_init_ms()
             self.time_queue.enqueue(cur_time)
             self.accel_queue.enqueue(hypot(*(self.imu.accel())))
             self.altitude_queue.enqueue(self.pressure_sensor.altitude())
-            #while time.ticks_diff(cur_time, self.time_queue.peek()) > time_interval:
+
             while rocket_time.RocketTimer.time_since_ms(self.time_queue.peek()) > time_interval:
                 self.time_queue.dequeue()
                 self.accel_queue.dequeue()

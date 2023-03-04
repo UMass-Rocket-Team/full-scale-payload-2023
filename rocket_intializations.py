@@ -13,11 +13,9 @@ class RocketIMU(metaclass=Singleton):
         #self.imu = BNO055(i2c)
         #FOR TESTING
         self.rocket_timer = rocket_time.RocketTimer()
+        self.sim_data = simulated_data.DataSimulator()
     def accel(self):
-        if 5000 < self.rocket_timer.time_since_init_ms() < 8000:
-            return simulated_data.generate_imu_data_high()
-        else:
-            return simulated_data.generate_imu_data_low()
+        return self.sim_data.accel()
     def mag(self):
         return (0, 0, 0)
     def gyro(self):
@@ -35,11 +33,9 @@ class RocketPressureSensor(metaclass=Singleton):
         #TODO: Initialize Pressure Sensor
         self.pressure_sensor = None
         self.rocket_timer = rocket_time.RocketTimer()
+        self.sim_data = simulated_data.DataSimulator()
     def altitude(self):
-        if 5000 < self.rocket_timer.time_since_init_ms() < 10000:
-            return simulated_data.generate_altitude_data_high()
-        else:
-            return simulated_data.generate_altitude_data_low()
+        return self.sim_data.altitude()
 class RocketRadio(metaclass=Singleton):
     def __init__(self):
         # # setup uart object (uart0 maps to pin 1 on the pico)
