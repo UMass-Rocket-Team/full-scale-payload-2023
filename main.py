@@ -9,6 +9,9 @@ import RPi.GPIO as GPIO
 
 from talker import Talker
 
+# cmd for rtl-sdr multimon:
+# sudo rtl_fm -f 144.8M -g 42 -s 22050 -l 20 - | multimon -t raw -a AFSK1200 /dev/stdin
+
 '''
 STARTUP / INIT PHASE
 '''
