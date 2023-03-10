@@ -29,7 +29,14 @@ class RocketIMU(metaclass=Singleton):
         return self.imu.gravity
     def lin_acc(self):
         return self.imu.linear_acceleration
-    
+    def euler(self):
+        return self.imu.euler
+    def quaternion(self):
+        return self.imu.quaternion
+    def calibrated(self):
+        return self.imu.calibrated
+    def calibration_status(self):
+        return self.imu.calibration_status
         
 class RocketPressureSensor(metaclass=Singleton):
     def __init__(self):
@@ -74,34 +81,23 @@ def get_valid_file_name(path_no_ext):
 
 class RocketSDCard(metaclass=Singleton):
     def __init__(self):
-        # # Initialize SD Card
-        # self.sd = machine.SDCard(slot=1, width=1, sck=machine.Pin(18), mosi=machine.Pin(19), miso=machine.Pin(20))
-        # self.vfs = machine.VfsFat(self.sd)
-        # machine.mount(self.vfs, "/sd")
+        # DONT NEED SD CARD, JUST SAVE FILE TO PI OS
 
-        #TESTING ONLY
         self.files_dictionary = {}
         self.imu_data_path = r'sd/imu_data.csv'
         self.flight_log_path = r'sd/flight_log.txt'
         self.files_dictionary[self.imu_data_path] = open(get_valid_file_name(self.imu_data_path), "w")
-        self.files_dictionary[self.imu_data_path].write("Time, Temperature, Mag X, Mag Y, Mag Z, Gyro X, Gyro Y, Gyro Z, Acc X, Acc Y, Acc Z, Lin Acc X, Lin Acc Y, Lin Acc Z, Gravity X, Gravity Y, Gravity Z, Euler X, Euler Y, Euler Z\n")
+        self.files_dictionary[self.imu_data_path].write("Time,Temperature,Mag X,Mag Y,Mag Z,Gyro X,Gyro Y,Gyro Z,Acc X,Acc Y,Acc Z,Lin Acc X,Lin Acc Y,Lin Acc Z,Gravity X,Gravity Y,Gravity Z,Euler X,Euler Y,Euler Z,Quaternion 1,Quaternion 2,Quaternion 3,Quaternion 4\n")
         self.files_dictionary[self.flight_log_path] = open(get_valid_file_name(self.flight_log_path), "w")
 
         self.imu = RocketIMU()
         self.rocket_timer = rocket_time.RocketTimer()
     def write_to_imu_data(self):
-        format_str = "{:5.3f},{:5.3f},{:5.3f},"
-        self.files_dictionary[self.imu_data_path].write(
-            str(self.rocket_timer.time_since_init_ms())
-            + ","
-            + str(self.imu.temperature())
-            + ","
-            + format_str.format(*self.imu.mag())
-            + format_str.format(*self.imu.gyro())
-            + format_str.format(*self.imu.accel())
-            + format_str.format(*self.imu.lin_acc())
-            + format_str.format(*self.imu.gravity())
-        )
+        #Make an array of all of the data
+        data = [self.rocket_timer.time_since_init_ms(), self.imu.temperature(), *self.imu.mag(), *self.imu.gyro(), *self.imu.accel(), *self.imu.lin_acc(), *self.imu.gravity(), *self.imu.euler(), *self.imu.quaternion()]
+        #Write all of the data to the file separated by commas
+        self.files_dictionary[self.imu_data_path].write(",".join([f"{x:5.3f}" for x in data]) + "\n")
+
     def write_to_flight_log(self, message):
         self.files_dictionary[self.flight_log_path].write(message)
     def save_files(self):

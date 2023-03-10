@@ -25,7 +25,7 @@ imu_data_interval = 1 / imu_data_frequency * 1000  # ms
 
 # -----CALIBRATION PHASE-----
 def calibration_fn():
-    uart.write("Calibration required: sys {} gyro {} accel {} mag {}".format(*imu.cal_status()))
+    uart.write("Calibration required: sys {} gyro {} accel {} mag {}".format(*imu.calibration_status()))
     if imu.calibrated():
         uart.write("\n\nCalibration Done!")
         sd.write_to_flight_log("\nCALIBRATED!")
@@ -34,7 +34,7 @@ def calibration_fn():
 
 # Check for calibration every 1000 ms
 #Comment out for testing
-#controller.do_every([calibration_fn], [1000])
+rocket_controller.do_every([calibration_fn], [1000])
 
 # The IMU is calibrated at this point
 # The reference gravity must be calculated in setup for the rest of the program to use
@@ -73,8 +73,8 @@ def find_reference_gravity():  # CHECK HERE FOR SOMEWHAT ARBITRARY VALUES
             # ARBITRARY: Multiply by 1.1 to give some room for error
             raise StopIteration
 
-
-#rocket_controller.do_every([data_updater, find_reference_gravity],[accel_sample_interval, check_interval])
+# Find the reference gravity
+rocket_controller.do_every([data_updater, find_reference_gravity],[accel_sample_interval, check_interval])
 
 sd.write_to_flight_log("\nGravity has been set: " + str(GRAVITY))
 sd.write_to_flight_log("\nTime (ms): " + str(rocket_controller.time_queue.peek()))
@@ -95,7 +95,8 @@ def find_reference_altitude():
         # ARBITRARY: Multiply by 0.9 to give some room for error
         raise StopIteration
 
-#rocket_controller.do_every([data_updater, find_reference_altitude],[accel_sample_interval, check_interval])
+# Find the reference altitude
+rocket_controller.do_every([data_updater, find_reference_altitude],[accel_sample_interval, check_interval])
 
 print("Entering launch detection phase")
 sd.write_to_flight_log("\nAltitude has been set: " + str(ALTITUDE_THRESHOLD))
