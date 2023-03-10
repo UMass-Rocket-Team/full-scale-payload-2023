@@ -33,7 +33,7 @@ class CameraController:
 
         # Initialize XBee serial communication 
         self.ser = serial.Serial(
-            port='/dev/ttyACM0',
+            port='/dev/ttyS0',
             baudrate=9600,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
@@ -42,8 +42,8 @@ class CameraController:
         )
 
         # Initilaize imu and altitude sensor
-        self.imu = adafruit_bno055.BNO055_I2C(busio.I2C(SCL, SDA), 0x28)
-        self.alt = adafruit_mpl3115a2.MPL3115A2(busio.I2C(SCL, SDA), address=0x60)
+        # self.imu = adafruit_bno055.BNO055_I2C(busio.I2C(SCL, SDA), 0x28)
+        # self.alt = adafruit_mpl3115a2.MPL3115A2(busio.I2C(SCL, SDA), address=0x60)
 
         # Initialize camera
         self.camera_index = self.find_available_camera()
@@ -132,7 +132,7 @@ class CameraController:
         ret, frame = camera.read()
         if ret:
             if self.grayscale_mode:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)                                                                                 
             if self.upsidedown_mode:
                 height = frame.shape[0]
                 width = frame.shape[1]

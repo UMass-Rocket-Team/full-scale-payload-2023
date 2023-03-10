@@ -9,7 +9,7 @@ GPIO.setup(23, GPIO.OUT)
 # PORT: ttyS0 with wires, ttyUSB0 with USB cable
 
 ser = serial.Serial(
-    port = '/dev/ttyUSB0',
+    port = '/dev/ttyS0',
     baudrate = 9600,
     parity = serial.PARITY_NONE,
     stopbits = serial.STOPBITS_ONE,
