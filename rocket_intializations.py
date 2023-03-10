@@ -5,37 +5,41 @@ import rocket_time
 from time import sleep
 import simulated_data
 from singleton import Singleton
-    
+import adafruit_bno055
+import adafruit_mpl3115a2
+import busio
+from board import *
+from adafruit_bus_device.i2c_device import I2CDevice
 class RocketIMU(metaclass=Singleton):
     def __init__(self):
         # Initialize IMU
-        #i2c = machine.I2C(0, sda=machine.Pin(16), scl=machine.Pin(17))
-        #self.imu = BNO055(i2c)
+        self.imu = adafruit_bno055.BNO055_I2C(busio.I2C(SCL, SDA), 0x28)
         #FOR TESTING
-        self.rocket_timer = rocket_time.RocketTimer()
-        self.sim_data = simulated_data.DataSimulator()
+        #self.rocket_timer = rocket_time.RocketTimer()
+        #self.sim_data = simulated_data.DataSimulator()
     def accel(self):
-        return self.sim_data.accel()
+        return self.imu.acceleration
     def mag(self):
-        return (0, 0, 0)
+        return self.imu.magnetic
     def gyro(self):
-        return (0, 0, 0)
+        return self.imu.gyro
     def temperature(self):
-        return 0
+        return self.imu.temperature
     def gravity(self):
-        return (0, 0, 0)
+        return self.imu.gravity
     def lin_acc(self):
-        return (0, 0, 0)
+        return self.imu.linear_acceleration
     
         
 class RocketPressureSensor(metaclass=Singleton):
     def __init__(self):
-        #TODO: Initialize Pressure Sensor
-        self.pressure_sensor = None
-        self.rocket_timer = rocket_time.RocketTimer()
-        self.sim_data = simulated_data.DataSimulator()
+        # Initialize Pressure Sensor
+        self.pressure_sensor = adafruit_mpl3115a2.MPL3115A2(busio.I2C(SCL, SDA), address=0x60)
+        #FOR TESTING
+        #self.rocket_timer = rocket_time.RocketTimer()
+        #self.sim_data = simulated_data.DataSimulator()
     def altitude(self):
-        return self.sim_data.altitude()
+        return self.pressure_sensor.altitude
 class RocketRadio(metaclass=Singleton):
     def __init__(self):
         # # setup uart object (uart0 maps to pin 1 on the pico)
