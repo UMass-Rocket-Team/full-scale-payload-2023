@@ -6,8 +6,10 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 GPIO.setup(23, GPIO.OUT)
 
+# PORT: ttyS0 with wires, ttyUSB0 with USB cable
+
 ser = serial.Serial(
-    port = '/dev/ttyS0',
+    port = '/dev/ttyUSB0',
     baudrate = 9600,
     parity = serial.PARITY_NONE,
     stopbits = serial.STOPBITS_ONE,

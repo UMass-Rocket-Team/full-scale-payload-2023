@@ -3,9 +3,15 @@ import os
 import datetime
 import time
 
-import serial
 import RPi.GPIO as GPIO
+import serial
+import busio
 
+import adafruit_mpl3115a2
+import adafruit_bno055
+
+from board import *
+from adafruit_bus_device.i2c_device import I2CDevice
 from talker import Talker
 
 '''
@@ -15,6 +21,11 @@ Project: UMass Rocket Team 2023 Primary Payload (ARCHIE)
 
 class CameraController:
     def __init__(self):
+        '''
+        STARTUP / INIT PHASE (continued)
+        '''
+        print("Phase 1: Start Up / Init\n")
+
         # Define GPIO pins
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
@@ -22,13 +33,17 @@ class CameraController:
 
         # Initialize XBee serial communication 
         self.ser = serial.Serial(
-            port='/dev/ttyS0',
+            port='/dev/ttyACM0',
             baudrate=9600,
             parity=serial.PARITY_NONE,
             stopbits=serial.STOPBITS_ONE,
             bytesize=serial.EIGHTBITS,
             timeout=1
         )
+
+        # Initilaize imu and altitude sensor
+        self.imu = adafruit_bno055.BNO055_I2C(busio.I2C(SCL, SDA), 0x28)
+        self.alt = adafruit_mpl3115a2.MPL3115A2(busio.I2C(SCL, SDA), address=0x60)
 
         # Initialize camera
         self.camera_index = self.find_available_camera()
@@ -37,11 +52,11 @@ class CameraController:
         self.pico = Talker()
 
         self.pico.send('on()')
-        print("Pico init...")
-        self.pico.send('2 + 2')
+        print("Initializing Pico communication...")
         self.pico.receive()
         time.sleep(3)
         self.pico.send('off()')
+        print("Pico configured!\n")
 
         # Define default image modes
         self.grayscale_mode = False
@@ -56,6 +71,15 @@ class CameraController:
                 cap.release()
                 return i
         return 0
+
+    def linear_deployment():
+        pass
+
+    def orientation():
+        pass
+
+    def vertical_lift():
+        pass
 
     def wait_for_command(self, call_sign):
         no_command = True
@@ -93,7 +117,6 @@ class CameraController:
             self.special_mode = False
 
     def turn_camera(self, degrees):
-        # Send message to Pico
         # Turn camera to the specified degrees (left or right)
         if degrees == 60:
             self.pico.send('rotate_camera(right)')
@@ -126,9 +149,8 @@ class CameraController:
 
     def run(self):
         '''
-        STARTUP / INIT PHASE
+        STARTUP / INIT PHASE (continued)
         '''
-        print("Phase 1: Start Up / Init")
 
         # Send startup confirmation to XBee
         msg = "Payload Powered ON\n\nENTERING INIT \ STARTUP PHASE"
@@ -137,10 +159,15 @@ class CameraController:
         # Define call sign
         call_sign = "XX4XXX"
 
-        # Define and calibrate IMU
-        # pico.send('calibrateIMU()')
-        # Define and calibrate altitude sensor
+        # Calibrate IMU
+        print("Calibrating IMU...")
         # [CODE HERE]
+        print("IMU calibrated!\n")
+
+        # Calibrate altitude sensor
+        print("Calibrating altitude sensor...")
+        # [CODE HERE]
+        print("Altiude sensor calibrated!\n")
 
         '''
         LAUNCH AND RECOVERY PHASE
@@ -160,33 +187,11 @@ class CameraController:
         msg = "\nENTERING DEPLOYMENT PHASE\n"
         self.ser.write(msg.encode())
 
-        # Spin orientation motor
-        # self.pico.send('spin_forward_orientation(1)')
-        # time.sleep(3)
+        # Linear motor control
 
         # Orientation motor control
-        for i in range(0, 100):
-            time.sleep(0.05)
-            print(i)
-            self.pico.send('spin_forward_orientation(2)')
-        time.sleep(1)
-        self.pico.send('brake_orientation()')
-
-        # Linear motor control
-        for i in range(0, 100):
-            time.sleep(0.05)
-            print(i)
-            self.pico.send('spin_forward_linear(' + str(i) + ')')
-        time.sleep(1)
-        self.pico.send('brake_linear()')
 
         # Verical motor control
-        for i in range(0, 100):
-            time.sleep(0.05)
-            print(i)
-            self.pico.send('spin_forward_vertical(' + str(i) + ')')
-        time.sleep(1)
-        self.pico.send('brake_vertical()')
 
         '''
         TASK INTERPRETATION AND EXECUTION PHASE
