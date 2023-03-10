@@ -2,6 +2,7 @@ import cv2
 import os
 import datetime
 import time
+import sys
 
 import RPi.GPIO as GPIO
 import serial
@@ -19,19 +20,24 @@ Author: Calista Greenway
 Project: UMass Rocket Team 2023 Primary Payload (ARCHIE)
 '''
 
+
 class CameraController:
     def __init__(self):
         '''
-        STARTUP / INIT PHASE (continued)
+        STARTUP / INIT PHASE
         '''
+
+        # Save all output to a file
+        sys.stdout = open('output.txt', 'w')
+
         print("Phase 1: Start Up / Init\n")
 
         # Define GPIO pins
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
-        GPIO.setup(23, GPIO.OUT) # XBee
+        GPIO.setup(23, GPIO.OUT)  # XBee
 
-        # Initialize XBee serial communication 
+        # Initialize XBee serial communication
         self.ser = serial.Serial(
             port='/dev/ttyS0',
             baudrate=9600,
@@ -42,8 +48,8 @@ class CameraController:
         )
 
         # Initilaize imu and altitude sensor
-        # self.imu = adafruit_bno055.BNO055_I2C(busio.I2C(SCL, SDA), 0x28)
-        # self.alt = adafruit_mpl3115a2.MPL3115A2(busio.I2C(SCL, SDA), address=0x60)
+        self.imu = adafruit_bno055.BNO055_I2C(busio.I2C(SCL, SDA), 0x28)
+        self.alt = adafruit_mpl3115a2.MPL3115A2(busio.I2C(SCL, SDA), address=0x60)
 
         # Initialize camera
         self.camera_index = self.find_available_camera()
@@ -97,21 +103,21 @@ class CameraController:
             # print("RAFCO incomplete. Please send another message from Xbee.")
 
     def process_command(self, command):
-        if command == "A1": # Turn camera 60 deg to the right
+        if command == "A1":  # Turn camera 60 deg to the right
             self.turn_camera(60)
-        elif command == "B2": # Turn camera 60 deg to the left
+        elif command == "B2":  # Turn camera 60 deg to the left
             self.turn_camera(-60)
-        elif command == "C3": # Take picture
+        elif command == "C3":  # Take picture
             self.take_picture()
-        elif command == "D4": # Change camera mode from color to grayscale
+        elif command == "D4":  # Change camera mode from color to grayscale
             self.grayscale_mode = True
-        elif command == "E5": # Change camera mode back from grayscale to color
+        elif command == "E5":  # Change camera mode back from grayscale to color
             self.grayscale_mode = False
-        elif command == "F6": # Rotate image 180 deg (upside down)
+        elif command == "F6":  # Rotate image 180 deg (upside down)
             self.upsidedown_mode = True
-        elif command == "G7": # Special effects filter
+        elif command == "G7":  # Special effects filter
             self.special_mode = True
-        elif command == "H8": # Remove all filters
+        elif command == "H8":  # Remove all filters
             self.grayscale_mode = False
             self.upsidedown_mode = False
             self.special_mode = False
@@ -132,15 +138,17 @@ class CameraController:
         ret, frame = camera.read()
         if ret:
             if self.grayscale_mode:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)                                                                                 
+                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             if self.upsidedown_mode:
                 height = frame.shape[0]
                 width = frame.shape[1]
-                rotation_matrix = cv2.getRotationMatrix2D((width/2, height/2), 180, 1)
+                rotation_matrix = cv2.getRotationMatrix2D(
+                    (width/2, height/2), 180, 1)
                 frame = cv2.warpAffine(frame, rotation_matrix, (width, height))
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
             image_path = os.path.join("images", f"image_{timestamp}.jpg")
-            cv2.putText(frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
+            cv2.putText(
+                frame, timestamp, (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 255), 1)
             cv2.imwrite(image_path, frame)
             print(f"Image taken and stored as {image_path}\n")
         else:
@@ -155,7 +163,7 @@ class CameraController:
         # Send startup confirmation to XBee
         msg = "Payload Powered ON\n\nENTERING INIT \ STARTUP PHASE"
         self.ser.write(msg.encode())
-        
+
         # Define call sign
         call_sign = "XX4XXX"
 
@@ -179,6 +187,9 @@ class CameraController:
         # Wait for launch detection
         # Wait for landing detection
         # [CODE HERE]
+
+        # [TEMP CODE] Wait for specified amount of time before entering next phase...
+        time.sleep(60)
 
         '''
         DEPLOYMENT PHASE
@@ -218,6 +229,10 @@ class CameraController:
         print("Phase 5: Data Backup and Archival")
         msg = "\nDATA BACKUP AND ARCHIVAL PHASE"
         self.ser.write(msg.encode())
+
+        # Close output.txt file
+        sys.stdout.close()
+
 
 archie = CameraController()
 archie.run()
