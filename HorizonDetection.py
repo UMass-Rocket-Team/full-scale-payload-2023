@@ -19,7 +19,7 @@ import math
 from matplotlib import pyplot as plt
 
 class HorizonDetection:
-    def __init__(self, imgName, minScaleFactor=11):
+    def __init__(self, imgName, minScaleFactor=9):
         self.MINSCALEFACTOR = minScaleFactor
         self.img = cv2.imread(imgName) # Read img
         self.height = self.img.shape[0]
@@ -30,24 +30,28 @@ class HorizonDetection:
     def detectHorizon(self):
         height = self.height
         width = self.width
+        aspectRatio = width/height
+        scaledWidth=400
+        scaledHeight=int(400/aspectRatio)
+        scaleFactor = height/scaledHeight
         MINSCALEFACTOR = self.MINSCALEFACTOR
+        resize = cv2.resize(self.img, (scaledWidth, scaledHeight))
+    
         #raw_img = np.copy(self.img) # Copies img so that img is not edited when lane img is
-        canny_image = self.canny(self.img) # Canny edge detection
-        skyMask = self.generateSkyMask(self.img) # Create mask of sky
-        cropped_image = self.region_of_interest(canny_image, skyMask) # Crop non-sky
-        masked_lines = cv2.HoughLinesP(cropped_image, 1, np.pi/180, 100, np.array([]), minLineLength=width/MINSCALEFACTOR, maxLineGap=5) # Identify straight edge within mask
-        unmasked_lines = cv2.HoughLinesP(canny_image, 1, np.pi/180, 100, np.array([]), minLineLength=width/MINSCALEFACTOR, maxLineGap=5) # Identify straight edge
-        self.horizon_prediction = self.compareHorizonCandidates(masked_lines, unmasked_lines, height, width) # Compare horizon candidates
+        canny_image = self.canny(resize) # Canny edge detection
+        cv2.imshow('canny', canny_image)
+        unmasked_lines = cv2.HoughLinesP(canny_image, 1, np.pi/180, 100, np.array([]), minLineLength=scaledWidth/MINSCALEFACTOR, maxLineGap=5) # Identify straight edge
+
+        self.horizon_prediction = self.compareHorizonCandidates(unmasked_lines, scaleFactor, height, width) # Compare horizon candidates
 
         midpoint_y = (self.horizon_prediction[1] + self.horizon_prediction[3])/2
         midpoint_x = (self.horizon_prediction[0] + self.horizon_prediction[2])/2
 
         self.thetaVariation = round(math.degrees(math.atan((midpoint_y - self.horizon_prediction[3])/(midpoint_x - self.horizon_prediction[2]))),2) # Calculate angle of horizon
-        #drawLines(img, masked_lines, "masked_lines") <- Uncomment to draw masked lines. For debugging purposes.
-        #drawLines(img, unmasked_lines, "unmasked_lines") <- Uncomment to draw masked lines. For debugging purposes.
+        self.drawLines(resize, unmasked_lines) #<- Uncomment to draw masked lines. For debugging purposes.
         self.drawHorizon(self.img, self.horizon_prediction)
         
-        cv2.putText(self.img, "Th: " + str(self.thetaVariation), (int(width - width * 3/10), 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2) # Display angle of horizon
+        cv2.putText(self.img, str(self.thetaVariation), (int(width - width * 1/5), int(height * 1/20)), cv2.FONT_HERSHEY_SIMPLEX, 5, (0, 0, 0), 15) # Display angle of horizon
         return self.img
         
     
@@ -55,8 +59,6 @@ class HorizonDetection:
         rotated_img = self.rotateImg(self.img, self.thetaVariation) # Rotate img by angle of horizon
         cv2.imshow('Rotated', rotated_img) # Show rotated img
         return rotated_img
-        
-
     
     # ==============================================================================
     # HELPER FUNCTIONS. NOT FOR CALLING EXTERNALLY.
@@ -67,17 +69,15 @@ class HorizonDetection:
     # Output: img with edges detected
     def canny(self, img):
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY) # Convert to grayscale
-        blur = cv2.GaussianBlur(gray, (5, 5), 0) # Blur img
-        canny = cv2.Canny(blur, 50, 150) # Canny edge detection
+        blur = cv2.GaussianBlur(gray, (11, 11), 0) # Blur img
+        denoise = cv2.fastNlMeansDenoising(blur, 5, 21, 7)
+        cv2.imshow('denoise', denoise)
+        #_, binary = cv2.threshold(denoise, 1000, 255, cv2.THRESH_OTSU)
+        binary = cv2.adaptiveThreshold(denoise,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY,11,3)
+        blur2 = cv2.GaussianBlur(binary, (3, 3), 0)
+        cv2.imshow('Contrast', blur2)
+        canny = cv2.Canny(blur2, 50, 150) # Canny edge detection
         return canny
-
-    # Region of Interest: Crop img to only include region of interest
-    # Input: img, mask
-    # Output: img cropped to region of interest
-    def region_of_interest(self, img, mask):
-        mask = cv2.bitwise_not(mask) # Invert mask
-        masked_image = cv2.bitwise_and(img, mask) # Apply mask using bitwise AND
-        return masked_image
 
     # drawLines: Draw lines on img based on line parameters. 
     # Only for debugging masked lines and unmasked lines.
@@ -99,7 +99,7 @@ class HorizonDetection:
             print("Fatal Error: No Lines Found")
 
     def drawHorizon(self, img, line):
-        cv2.line(img, (line[0], line[1]), (line[2], line[3]), (0, 255, 0), 2)
+        cv2.line(img, (line[0], line[1]), (line[2], line[3]), (0, 0, 255), 20)
 
     # parameterize: Convert line parameters to slope and intercept 
     # Input: Array of line lengths, array of line parameters, left index, right index
@@ -119,55 +119,28 @@ class HorizonDetection:
     # Input: Masked lines, unmasked lines, height of img, width of img
     # Output: Coordinates of horizon
     # Note: Line parameters are in the form (slope, intercept)
-    def compareHorizonCandidates(self, masked_lines, unmasked_lines, height, width):
-        variance = height/20
-        maskedParams = []
+    def compareHorizonCandidates(self, unmasked_lines, scaleFactor, height, width):
         unmaskedParams = []
-        totalParams = []
-        maskedAv = None
         unmaskedAv = None
-        totalAv = None
-        if masked_lines is not None:
-            maskedParams.append(self.parameterize(masked_lines))
-            maskedAv = np.average(maskedParams, axis=0)
         if unmasked_lines is not None:
             unmaskedParams.append(self.parameterize(unmasked_lines))
             unmaskedAv = np.average(unmaskedParams, axis=0)
-        if unmasked_lines is not None and masked_lines is not None:
-            if (unmaskedAv[1] <= maskedAv[1] + variance) and (unmaskedAv[1] >= maskedAv[1] - variance):
-                totalParams.append(unmaskedParams)
-                totalParams.append(maskedParams)
-                totalAv = np.average(totalParams, axis=0)
-                return self.make_coordinates(width, totalAv)
-            else:
-                return self.make_coordinates(width, maskedParams)
-        elif  unmasked_lines is not None:
-            return self.make_coordinates(width, [unmaskedAv])
+            return self.make_coordinates(width, scaleFactor, [unmaskedAv])
         else:
-            return self.make_coordinates(width, [maskedAv])
+            print("Fatal Error: No lines detected")
 
     # make_coordinates: Convert line parameters to coordinates
     # Input: Width of img, line parameters
     # Output: Coordinates of line
     # Note: Line parameters are in the form (slope, intercept)          
-    def make_coordinates(self, width, line_parameters):
+    def make_coordinates(self, width, scaleFactor, line_parameters):
         m, b = line_parameters[0]
         x1 = 0
         x2 = width
-        y1 = int(m*x1+b)
-        y2 = int(m*x2+b)
+        y1 = int(m*x1+(scaleFactor*b))
+        y2 = int(m*x2+(scaleFactor*b))
         return np.array([x1, y1, x2, y2])
 
-    # generateSkyMask: Generate a binary mask of the sky. The mask is generated by
-    # converting the img to black and white, blurring it, and then thresholding
-    # it. The threshold is determined by the Otsu method.
-    # Input: img
-    # Output: Binary mask of sky
-    def generateSkyMask(self, img):
-        bw_image = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)# Convert to BW for binary masking
-        blur_image = cv2.bilateralFilter(bw_image, 20, 100, 100) # Blur For binary masking
-        _, skyMask = cv2.threshold(blur_image, 250, 255, cv2.THRESH_OTSU) # Binary mask. First part of tuple is voided
-        return skyMask
 
     # rotateImg: Rotate img by angle
     # Input: img, angle
