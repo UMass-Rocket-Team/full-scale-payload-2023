@@ -134,3 +134,32 @@ def imu_demo(): # Demo function printing out everything the IMU can measure
 # ==== end test code
 
 # SD Card Module Functions
+def log(message = "\n"):
+    flight_log.write(message)
+
+def datalog():
+    imu_data.write(
+        str(time.ticks_diff(time.ticks_ms(), init_time) / 1000.0)
+        + ","
+        + str(imu.temperature())
+        + ","
+        + "{:5.3f},{:5.3f},{:5.3f},".format(*imu.mag())
+        + "{:5.3f},{:5.3f},{:5.3f},".format(*imu.gyro())
+        + "{:5.3f},{:5.3f},{:5.3f},".format(*imu.accel())
+        + "{:5.3f},{:5.3f},{:5.3f},".format(*imu.lin_acc())
+        + "{:5.3f},{:5.3f},{:5.3f},".format(*imu.gravity())
+        + "{:4.3f},{:4.3f},{:4.3f}".format(*imu.euler())
+        + "\n"
+    )
+
+def close_SD():
+    imu_data.close()
+    flight_log.close()
+
+# ==== test code
+def test_SD():
+    log("The rocket is flying!") # logs this string
+    log() # Logs a newline
+    datalog() # Logs a ton of CSV data from the IMU
+    close_SD() # Should be only run when you are sure you are done saving to the SD card (preferably at the end of the program)
+# ==== end test code
