@@ -37,7 +37,14 @@ cv2.destroyAllWindows()
 
 ## Version Log:
 
-#### HorizonDetection V2 (current):
+#### HorizonDetection V3 (current):
+
+* Removed image cropping to mask
+* Removed masked lines
+* Added compression, denoising, blurring, and thresholding for more accurate canny
+* Reduced overall size of file and minor increases to performance
+
+#### HorizonDetection V2:
 
 * Format as class to permit import of methods
 
